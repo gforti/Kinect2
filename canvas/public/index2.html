@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Node Kinect2 Client</title>
+    <style>
+        body,
+        html {
+            padding: 0;
+            margin: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background-color: rgba(0, 0, 0, 0.95);
+        }
+
+        #bodyCanvas {
+            background: url('rome-540040117dd68.jpg');
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="bodyCanvas" text="victory" size="228"></canvas>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        var socket = io.connect('/');
+        const canvas = document.getElementById('bodyCanvas')
+        canvas.width = window.innerWidth
+        canvas.height = window.innerHeight
+        const ctx = canvas.getContext("2d")
+
+        
+
+        var colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#00ffff', '#ff00ff'];
+        var background = new Image();
+        let backgroundReady = false
+        background.addEventListener('load', () => {
+            console.log('ready')
+            backgroundReady = true
+        })
+        background.src = "rome-540040117dd68.jpg";
+
+      
+        let mouse = new Mouse(canvas)
+        let draw = new Draw(ctx)
+
+
+       
+
+        // handstate circle size
+        var HANDSIZE = 20;
+
+        // closed hand state color
+        var HANDCLOSEDCOLOR = "red";
+
+        // open hand state color
+        var HANDOPENCOLOR = "green";
+
+        // lasso hand state color
+        var HANDLASSOCOLOR = "blue";
+
+        function updateHandState(handState, jointPoint) {
+            switch (handState) {
+                case 3:
+                    drawHand(jointPoint, HANDCLOSEDCOLOR);
+                    break;
+
+                case 2:
+                    drawHand(jointPoint, HANDOPENCOLOR);
+                    break;
+
+                case 4:
+                    drawHand(jointPoint, HANDLASSOCOLOR);
+                    break;
+            }
+        }
+
+        function drawHand(jointPoint, handColor) {
+            // draw semi transparent hand cicles
+            ctx.globalAlpha = 0.75;
+            ctx.beginPath();
+            ctx.fillStyle = handColor;
+            ctx.arc(jointPoint.depthX * canvas.width, jointPoint.depthY * canvas.height, HANDSIZE, 0, Math.PI * 2, true);
+            ctx.fill();
+            ctx.closePath();
+            ctx.globalAlpha = 1;
+        }
+
+        socket.on('bodyFrame', function (bodyFrame) {
+           ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (backgroundReady)
+                ctx.drawImage(background, 0, 0);
+            var index = 0;
+            bodyFrame.bodies.forEach(function (body) {
+                if (body.tracked) {
+					/*for (var jointType in body.joints) {
+						
+						ctx.fillStyle = colors[index];
+						ctx.fillRect(joint.depthX * canvas.width, joint.depthY * canvas.height, 10, 10);
+					}*/
+                    //draw hand states
+                    //updateHandState(body.leftHandState, body.joints[7]);
+                    updateHandState(body.rightHandState, body.joints[11]);
+              
+                    let joint = body.joints[11];
+                    mouse.x = joint.depthX * canvas.width
+                    mouse.y = joint.depthY * canvas.height
+                    index++;
+                }
+            });
+        });
+
+
+
+
+
+
+        let text = canvas.getAttribute('text');
+        let fontSize = canvas.getAttribute('size');
+       
+
+        let pixels = []
+        let animation = {
+            radius: 4,
+            move: 0.25,
+            pull: 0.15,
+            dampen: 0.95,
+            density: 5
+        }
+
+        
+        init()
+        frame()
+
+        function init() {
+            draw.setText({
+                font: `${fontSize}px monospace`,
+                fillStyle: '#ffff00',
+                textAlign: 'center',
+                textBaseline: 'middle'
+            })
+            draw.fillText(text, (window.innerWidth - fontSize) / 2, window.innerHeight / 2);
+            pixels = scene(ctx, animation.density)
+            for (var particle of pixels) {
+                particle.lx = particle.x
+                particle.ly = particle.y
+                particle.dx = Math.random() * 25 - 10
+                particle.dy = Math.random() * 25 - 10
+            }
+        }
+
+        /*
+        * Get pixels positions 
+        * @Params: {ctx} 		 -> canvas context
+        * @Params: {density} -> animation.density
+        */
+        function scene(ctx, density) {
+            let pixelData = [];
+            let data = ctx.getImageData(0, 0, window.innerWidth, window.innerHeight);
+            let rows = window.innerWidth / density * 3
+            let cols = window.innerHeight / density * 3
+            console.log(rows, cols)
+
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    let pixelX = col * density + density / 2
+                    let pixelY = row * density + density / 2
+
+                    for (let rp = 0; rp < density; rp++) {
+                        for (let rc = 0; rc < density; rc++) {
+                            // pixel -> pixel id
+                            let pixel = ((row * density + rp) * window.innerWidth + (col * density + rc)) * 4
+                            let colors = {
+                                r: data.data[pixel],
+                                g: data.data[pixel + 1],
+                                b: data.data[pixel + 2],
+                                a: data.data[pixel + 3],
+                            }
+                            if (colors.a) {
+                                pixelData.push({
+                                    x: pixelX,
+                                    y: pixelY,
+                                    color: colors
+                                })
+                                rp = density;
+                                rc = density;
+                            }
+                        }
+                    }
+
+
+                }
+            }
+            return pixelData
+        }
+
+        /*
+        * Animation Frames
+        */
+        function frame() {
+            draw.clear()
+            requestAnimationFrame(frame)
+
+            for (let particle of pixels) {
+                let color = `rgba(${particle.color.r},${particle.color.g},${particle.color.b},${particle.color.a})`
+                let distance = distanceFromMouse(particle.x, particle.y, mouse.x, mouse.y)
+                let shift = 1 / distance * 6
+
+                for (let ax of ['x', 'y']) {
+                    particle[ax] += particle['d' + ax]
+                    particle['d' + ax] += (Math.random() - 0.5) * animation.move
+                    particle['d' + ax] -= Math.sign(particle[ax] - particle['l' + ax]) * animation.pull
+                    particle['d' + ax] *= animation.dampen
+                    particle['d' + ax] -= Math.sign(mouse[ax] - particle[ax]) * shift
+                }
+
+                draw.fillCircle(particle.x, particle.y, animation.radius, color)
+            }
+        }
+
+        /*
+        * Canvas Draw Object
+        *
+        * @Params: {ctx} -> canvas context
+        * 
+        * Prototypes: 
+        * - setText			-> setup text property
+        * - fillText		-> drawing text on canvas with fill property
+        * - strokeText	-> drawing text on canvas with stroke color property
+        * - fillCircle	-> drawing circle on canvas with fill color property
+        * - clear				-> to clean the canvas 
+        */
+        function Draw(ctx) {
+            this.ctx = ctx
+            this.canvas = canvas
+
+            this.setText = proporty => {
+                for (let option in proporty) {
+                    this.ctx[option] = proporty[option]
+                }
+            }
+
+            this.fillText = (text, x, y) => {
+                this.ctx.fillText(text, x, y);
+            }
+
+            this.strokeText = (text, x, y, ) => {
+                this.ctx.strokeText(text, x, y)
+            }
+
+            this.fillCircle = (x, y, radius, color) => {
+                this.ctx.beginPath()
+                this.ctx.arc(x, y, radius, 0, Math.PI * 2)
+                if (color) this.ctx.fillStyle = color
+                this.ctx.fill()
+            }
+
+            this.clear = () => {
+                //this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+            }
+        }
+
+        /*
+        * Distance function from mouse position
+        */
+        function distanceFromMouse(x, y, mX, mY) {
+            return Math.sqrt(Math.pow(Math.pow(x - mX, 2) + y - mY, 2))
+        }
+
+        /*
+        * Mouse position event
+        * @Params: {canvas} -> html canvas element
+        * resutl: mouse.x and mouse.y
+        */
+        function Mouse(canvas) {
+            this.x = 0
+            this.y = 0
+            /*this.canvas = canvas
+            this.canvas.addEventListener('mousemove', function (e) {
+                this.x = e.offsetX
+                this.y = e.offsetY
+            }.bind(this))
+            this.canvas.addEventListener('mouseleave', function (e) {
+                this.x = -100
+                this.y = -100
+            }.bind(this))*/
+        }
+
+
+    </script>
+</body>
+
+</html>
