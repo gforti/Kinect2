@@ -97,14 +97,18 @@
 			var index = 0;
 			bodyFrame.bodies.forEach(function (body) {
 				if (body.tracked) {
-					for (var jointType in body.joints) {
-						var joint = body.joints[jointType];
+					/*for (var jointType in body.joints) {
+						
 						ctx.fillStyle = colors[index];
 						ctx.fillRect(joint.depthX * canvas.width, joint.depthY * canvas.height, 10, 10);
-					}
+					}*/
 					//draw hand states
-					updateHandState(body.leftHandState, body.joints[7]);
-					updateHandState(body.rightHandState, body.joints[11]);
+					//updateHandState(body.leftHandState, body.joints[7]);
+					//updateHandState(body.rightHandState, body.joints[11]);
+					md = true
+					let joint = body.joints[11];
+					mx = joint.depthX * canvas.width
+					my = joint.depthY * canvas.height
 					index++;
 				}
 			});
@@ -115,7 +119,7 @@
 
 		
 		
-/*
+
 		let lt = 0,
 			mx, my, md = true;
 
@@ -178,7 +182,7 @@
 				ps.push(new P(mx, my, `rgb(${a},${b},${c})`));
 			}
 
-			ctx.clearRect(0, 0, cv.width, cv.height);
+			//ctx.clearRect(0, 0, cv.width, cv.height);
 			ctx.globalCompositeOperation = "screen";
 			ps.forEach((p, i) => {
 				p.paint(dt);
@@ -186,28 +190,24 @@
 					p.init(mx, my, `rgb(${a},${b},${c})`, dt);
 				}
 			});
+			md = false
 		}
 
 		function resize() {
-			const b = cv.getBoundingClientRect();
-			cv.width = b.width * PR;
-			cv.height = b.height * PR;
+			canvas.width = window.innerWidth
+			canvas.height = window.innerHeight
 		}
 
 		window.addEventListener("resize", resize, false);
-		window.addEventListener("mousemove", e => {
-			let b = cv.getBoundingClientRect();
-			mx = (e.clientX - b.left) * cv.width / b.width;
-			my = (e.clientY - b.top) * cv.height / b.height;
-		}, false);
-		window.addEventListener("mousedown", e => md = true, false);
-		window.addEventListener("mouseup", e => md = false, false);
+		
+		//window.addEventListener("mousedown", e => md = true, false);
+		//window.addEventListener("mouseup", e => md = false, false);
 		resize();
 		mx = 0.5 * cv.width;
 		my = 0.95 * cv.height;
 		requestAnimationFrame(paint);
 
-		*/
+		
 	</script>
 </body>
 
