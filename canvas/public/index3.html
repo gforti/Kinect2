@@ -51,7 +51,7 @@
         canvas.height = window.innerHeight
         const ctx = canvas.getContext("2d")
 
-        let mousePos = {};
+        let mousePos = []
 
 
         var colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#00ffff', '#ff00ff'];
@@ -76,7 +76,7 @@
         }, 10000)
 
 
-        let mouse = new Mouse(canvas)
+        let mouse = []
         let draw = new Draw(ctx)
 
 
@@ -129,7 +129,9 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             if (backgroundReady)
                 ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
-            var index = 0;
+            let index = 0
+            mouse = []
+            mousePos = []
             bodyFrame.bodies.forEach(function (body) {
                 if (body.tracked) {
 					/*for (var jointType in body.joints) {
@@ -156,12 +158,9 @@ trackingState: 2*/
 
                     let joint = body.joints[11];
                    
-                    mouse.x = joint.depthX * canvas.width
-                    mouse.y = joint.depthY * canvas.height
-
-                    mousePos.x = joint.depthX * canvas.width
-                    mousePos.y = joint.depthY * canvas.height
-                    
+                    mouse[index] = {x: joint.depthX * canvas.width, y: joint.depthY * canvas.height }                    
+                    mousePos[index] = {x: joint.depthX * canvas.width, y: joint.depthY * canvas.height }
+                                      
                     index++;
                 }
             });
@@ -221,24 +220,28 @@ trackingState: 2*/
             var pull = animation.pull
             var dampen = animation.dampen
 
-            for (var particle of particles) {
-                var distance = Math.sqrt(Math.pow(particle.y - mouse.y, 2) + Math.pow(particle.x - mouse.x, 2))
-                var push = 1 / distance * 6
+            for (let particle of particles) {
+                mouse.forEach( mouseI => {
 
-                for (var ax of ['x', 'y']) {
-                    // Move
-                    particle[ax] += particle['a' + ax]
-                    // Move random
-                    particle['a' + ax] += (Math.random() - 0.5) * move
-                    // Pull to start
-                    particle['a' + ax] -= Math.sign(particle[ax] - particle['s' + ax]) * pull
-                    // Dampen
-                    particle['a' + ax] *= dampen
-                    // Push from mouse
-                    particle['a' + ax] -= Math.sign(mouse[ax] - particle[ax]) * push
-                }
+                
+                    let distance = Math.sqrt(Math.pow(particle.y - mouseI.y, 2) + Math.pow(particle.x - mouseI.x, 2))
+                    let push = 1 / distance * 6
 
-                draw.fillCircle(particle.x, particle.y, 4)
+                    for (var ax of ['x', 'y']) {
+                        // Move
+                        particle[ax] += particle['a' + ax]
+                        // Move random
+                        particle['a' + ax] += (Math.random() - 0.5) * move
+                        // Pull to start
+                        particle['a' + ax] -= Math.sign(particle[ax] - particle['s' + ax]) * pull
+                        // Dampen
+                        particle['a' + ax] *= dampen
+                        // Push from mouse
+                        particle['a' + ax] -= Math.sign(mouseI[ax] - particle[ax]) * push
+                    }
+
+                    draw.fillCircle(particle.x, particle.y, 4)
+                })
             }
         }
 
@@ -360,9 +363,9 @@ trackingState: 2*/
             }
         }
 
-        function Mouse(canvas) {
-            this.x = 0
-            this.y = 0
+        function Mouse() {
+            this.x = []
+            this.y = []
         }
 
 
@@ -383,23 +386,25 @@ trackingState: 2*/
   
 
   
- setInterval(function(){
-    if(mousePos.x > 0 && mousePos.y > 0){
-      
-      var range = 15;
-      
-      var color = "background: rgb("+getRandomInt(0,255)+","+getRandomInt(0,255)+","+getRandomInt(0,255)+");";
-      
-      var sizeInt = getRandomInt(10, 30);
-      size = "height: " + sizeInt + "px; width: " + sizeInt + "px;";
-      
-      var left = "left: " + getRandomInt(mousePos.x-range-sizeInt, mousePos.x+range) + "px;";
-      
-      var top = "top: " + getRandomInt(mousePos.y-range-sizeInt, mousePos.y+range) + "px;"; 
+ setInterval(() => {
+    mousePos.forEach( mouseI => {
+        if(mouseI.x > 0 && mouseI.y > 0){
+        
+        var range = 15;
+        
+        var color = "background: rgb("+getRandomInt(0,255)+","+getRandomInt(0,255)+","+getRandomInt(0,255)+");";
+        
+        var sizeInt = getRandomInt(10, 30);
+        size = "height: " + sizeInt + "px; width: " + sizeInt + "px;";
+        
+        var left = "left: " + getRandomInt(mouseI.x-range-sizeInt, mouseI.x+range) + "px;";
+        
+        var top = "top: " + getRandomInt(mouseI.y-range-sizeInt, mouseI.y+range) + "px;"; 
 
-      var style = left+top+color+size;
-      $("<div class='ball' style='" + style + "'></div>").appendTo('#wrap').one("webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend", function(){$(this).remove();}); 
-    }
+        var style = left+top+color+size;
+        $("<div class='ball' style='" + style + "'></div>").appendTo('#wrap').one("webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend", function(){$(this).remove();}); 
+        }
+    })
   }, 1);
 
 
