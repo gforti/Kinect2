@@ -59,12 +59,10 @@
         let backgroundReady = false
         const background = new Image();
         background.addEventListener('load', () => {
-                console.log('loaded')
                 backgroundReady = true
             })
 
         setInterval(() => {
-            console.log('5 seconds')
             indexBG++
             if(indexBG > 9) {
                 indexBG = 1
@@ -390,18 +388,19 @@ trackingState: 2*/
     mousePos.forEach( mouseI => {
         if(mouseI.x > 0 && mouseI.y > 0){
         
-        var range = 15;
+        let range = 15;
         
-        var color = "background: rgb("+getRandomInt(0,255)+","+getRandomInt(0,255)+","+getRandomInt(0,255)+");";
+        let color = "background: rgb("+getRandomInt(0,255)+","+getRandomInt(0,255)+","+getRandomInt(0,255)+");";
         
-        var sizeInt = getRandomInt(10, 30);
+        let sizeInt = getRandomInt(10, 30);
         size = "height: " + sizeInt + "px; width: " + sizeInt + "px;";
         
-        var left = "left: " + getRandomInt(mouseI.x-range-sizeInt, mouseI.x+range) + "px;";
+        let left = "left: " + getRandomInt(mouseI.x-range-sizeInt, mouseI.x+range) + "px;";
         
-        var top = "top: " + getRandomInt(mouseI.y-range-sizeInt, mouseI.y+range) + "px;"; 
+        let top = "top: " + getRandomInt(mouseI.y-range-sizeInt, mouseI.y+range) + "px;"; 
 
-        var style = left+top+color+size;
+        let style = left+top+color+size;
+    
         $("<div class='ball' style='" + style + "'></div>").appendTo('#wrap').one("webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend", function(){$(this).remove();}); 
         }
     })
