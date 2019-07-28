@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Hello World!</title>
+		<style>
+		html, body {
+			min-height: 100%;
+		}
+		body {
+			background: linear-gradient(to bottom, #f2f9fe 0%,#d6f0fd 100%);
+		}
+		</style>
+	</head>
+	<body>
+		<canvas id="colorCanvas" style="background: url('rome-540040117dd68.jpg')" width="1920" height="1080"></canvas>
+	
+		<script src="./image-buffer-renderer-webgl.js"></script>
+		<script src="../../../socket.io/socket.io.js"></script>
+	<script>
+
+		
+
+		var socket = io.connect('/');
+		var colorCanvas = document.getElementById('colorCanvas');
+		var colorRenderer = new ImageBufferRendererWebgl(colorCanvas);
+
+	function processImageData(imageBuffer, width, height) {
+
+		if (colorRenderer.isProcessing || (width <= 0) || (height <= 0)) {
+			// Don't start processing new data when we are in the middle of
+			// processing data already.
+			// Also, Only do work if image data to process is of the expected size
+			return;
+		}
+
+		colorRenderer.isProcessing = true;
+		colorRenderer.processImageData(imageBuffer, width, height);
+		colorRenderer.isProcessing = false;
+	}
+
+		socket.on('colorFrame', function(imageBuffer){
+			console.log('imageBuffer')
+			processImageData(imageBuffer, colorCanvas.width, colorCanvas.height)
+			
+		});
+	</script>
+	</body>
+</html>
