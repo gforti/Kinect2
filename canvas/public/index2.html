@@ -16,7 +16,7 @@
         }
 
         #bodyCanvas {
-            background: url('rome-540040117dd68.jpg');
+            background-color: black;
         }
 
         .ball {
@@ -55,18 +55,33 @@
 
 
         var colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#00ffff', '#ff00ff'];
-        var background = new Image();
+        let indexBG = 1
         let backgroundReady = false
+        const background = new Image();
         background.addEventListener('load', () => {
-            backgroundReady = true
-        })
-        background.src = "rome-540040117dd68.jpg";
+                console.log('loaded')
+                backgroundReady = true
+            })
 
-               
+        setInterval(() => {
+            console.log('5 seconds')
+            indexBG++
+            if(indexBG > 9) {
+                indexBG = 1
+            }
+           
+            backgroundReady = false
+           
+            background.src = `rome${indexBG}.jpg`;
+        }, 10000)
 
 
         let mouse = new Mouse(canvas)
         let draw = new Draw(ctx)
+
+
+       
+        
 
 
 
@@ -113,7 +128,7 @@
         socket.on('bodyFrame', function (bodyFrame) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             if (backgroundReady)
-                ctx.drawImage(background, 0, 0);
+                ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
             var index = 0;
             bodyFrame.bodies.forEach(function (body) {
                 if (body.tracked) {
