@@ -25,15 +25,14 @@
             width: 10px;
             height: 10px;
             border-radius: 50%; 
-            background: gray;
-            animation: implode 1s ease-in-out;
-            animation-fill-mode: both;
-      
+            background-color: #fff;
+            box-shadow:
+                0 0 60px 30px #fff,  /* inner white */
+                0 0 100px 60px #f0f, /* middle magenta */
+                0 0 140px 90px #0ff; /* outer cyan */
             }
 
-@keyframes implode {
-  100% {transform: scale(0)}
-}
+
     </style>
 </head>
 
@@ -51,7 +50,6 @@
         canvas.height = window.innerHeight
         const ctx = canvas.getContext("2d")
 
-        let mousePos = []
 
 
         var colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#00ffff', '#ff00ff'];
@@ -64,7 +62,7 @@
 
         setInterval(() => {
             indexBG++
-            if(indexBG > 9) {
+            if(indexBG > 15) {
                 indexBG = 1
             }
            
@@ -114,13 +112,18 @@
 
         function drawHand(jointPoint, handColor) {
             // draw semi transparent hand cicles
-            ctx.globalAlpha = 0.75;
+            ctx.save()
             ctx.beginPath();
-            ctx.fillStyle = handColor;
-            ctx.arc(jointPoint.depthX * canvas.width, jointPoint.depthY * canvas.height, HANDSIZE, 0, Math.PI * 2, true);
+            ctx.fillStyle = '#ffffff';
+            ctx.shadowColor = handColor;
+            ctx.shadowBlur = 20;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+            ctx.arc(jointPoint.x, jointPoint.y, HANDSIZE, 0, Math.PI * 2, true);
             ctx.fill();
             ctx.closePath();
             ctx.globalAlpha = 1;
+            ctx.restore()
         }
 
         socket.on('bodyFrame', function (bodyFrame) {
@@ -129,7 +132,6 @@
                 ctx.drawImage(background, 0, 0, canvas.width, canvas.height);
             let index = 0
             mouse = []
-            mousePos = []
             bodyFrame.bodies.forEach(function (body) {
                 if (body.tracked) {
 					/*for (var jointType in body.joints) {
@@ -155,9 +157,9 @@ orientationZ: 0.27129146456718445
 trackingState: 2*/
 
                     let joint = body.joints[11];
+                    drawHand({x: joint.depthX * canvas.width, y: joint.depthY * canvas.height }, colors[index])
                    
-                    mouse[index] = {x: joint.depthX * canvas.width, y: joint.depthY * canvas.height }                    
-                    mousePos[index] = {x: joint.depthX * canvas.width, y: joint.depthY * canvas.height }
+                    mouse[index] = {x: joint.depthX * canvas.width, y: joint.depthY * canvas.height }
                                       
                     index++;
                 }
@@ -213,7 +215,7 @@ trackingState: 2*/
 
         function step() {
             draw.clear()
-            window.requestAnimationFrame(step)
+            
             var move = animation.move
             var pull = animation.pull
             var dampen = animation.dampen
@@ -241,6 +243,7 @@ trackingState: 2*/
                     draw.fillCircle(particle.x, particle.y, 4)
                 })
             }
+            window.requestAnimationFrame(step)
         }
 
         function scan(ctx, density) {
@@ -366,45 +369,6 @@ trackingState: 2*/
             this.y = []
         }
 
-
-
-
-
-
-
-
-
- 
-  
-  
-
- function getRandomInt(min, max) {
-   return Math.round(Math.random() * (max - min + 1)) + min;
- }
-  
-
-  
- setInterval(() => {
-    mousePos.forEach( mouseI => {
-        if(mouseI.x > 0 && mouseI.y > 0){
-        
-        let range = 15;
-        
-        let color = "background: rgb("+getRandomInt(0,255)+","+getRandomInt(0,255)+","+getRandomInt(0,255)+");";
-        
-        let sizeInt = getRandomInt(10, 30);
-        size = "height: " + sizeInt + "px; width: " + sizeInt + "px;";
-        
-        let left = "left: " + getRandomInt(mouseI.x-range-sizeInt, mouseI.x+range) + "px;";
-        
-        let top = "top: " + getRandomInt(mouseI.y-range-sizeInt, mouseI.y+range) + "px;"; 
-
-        let style = left+top+color+size;
-    
-        $("<div class='ball' style='" + style + "'></div>").appendTo('#wrap').one("webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend", function(){$(this).remove();}); 
-        }
-    })
-  }, 1);
 
 
 
