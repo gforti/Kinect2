@@ -64,7 +64,7 @@
             animation: titleAnimation 90s linear infinite 0s;
         }
         .cb-slideshow li div h3 {
-            font-family: 'BebasNeueRegular', 'Arial Narrow', Arial, sans-serif;
+            font-family: 'Times New Roman', Times, serif;
             font-size: 90px;
             padding: 0;
             line-height: 90px;
@@ -224,6 +224,19 @@
             .cb-slideshow li div h3 { font-size: 50px }
         }
 
+        #maintext {
+            font-weight: 900;
+            font-family: 'Times New Roman', Times, serif;
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            font-size: 5rem;
+            color: #e8b923;
+            text-shadow: 1px 1px 10px #000;
+            text-align: right; 
+            z-index: 3000;
+        }
+
     </style>
 </head>
 
@@ -246,6 +259,7 @@
         <li><span>Image 14</span><div><h3>shield·of·faith</h3></div></li>
         <li><span>Image 15</span><div><h3>stand your ground</h3></div></li>
     </ul>
+    <div id="maintext">VICTORIOSO</div>
 
     <canvas id="bodyCanvas" text="victorioso" size="228"></canvas>
     <canvas id="bodyCanvas2"></canvas>
@@ -253,54 +267,73 @@
     <script src="/socket.io/socket.io.js"></script>
     
     <script>
-        const socket = io.connect('/');
-        const canvas = document.getElementById('bodyCanvas')
+        const socket = io.connect('/')
+
         const canvas2 = document.getElementById('bodyCanvas2')
-        canvas.width = window.innerWidth
-        canvas.height = window.innerHeight
-        const ctx = canvas.getContext("2d")
         canvas2.width = window.innerWidth
         canvas2.height = window.innerHeight
         const ctx2 = canvas2.getContext("2d")
 
+        const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#00ffff', '#ff00ff']
 
+        const c = document.getElementById("bodyCanvas")
+        const $ = c.getContext("2d")
+        const w = c.width = window.innerWidth
+        const h = c.height = window.innerHeight
 
-        const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#00ffff', '#ff00ff'];
-        let mouse = []
-        let draw = new Draw(ctx)
+        let lite = (function () {
+            function lite(x, y) {
+                this.x = x
+                this.y = y
+            }
+
+            lite.prototype.upd = function () {
+                this.x -= Math.sin(Math.random()) * 6 - 3
+                this.y -= Math.cos(Math.random()) * 6 - 3
+            }
+            return lite
+        })()
+
+        let strikes = []
+        strikes[0] = [new lite(w / 2, h / 2)]
+        let index = 0
+
 
         // handstate circle size
-        const HANDSIZE = 20;
+        const HANDSIZE = 20
+
+        $.clearRect(0, 0, w, h)
+        ctx2.clearRect(0, 0, w, h)
 
         function drawHand(jointPoint, handColor) {
             // draw semi transparent hand cicles
-            ctx2.beginPath();
-            ctx2.fillStyle = '#ffffff';
-            ctx2.shadowColor = handColor;
+            ctx2.beginPath()
+            ctx2.fillStyle = '#ffffff'
+            ctx2.shadowColor = handColor
             ctx2.shadowBlur = HANDSIZE
-            ctx2.shadowOffsetX = 0;
-            ctx2.shadowOffsetY = 0;
-            ctx2.arc(jointPoint.x, jointPoint.y, HANDSIZE, 0, Math.PI * 2, true);
-            ctx2.fill();
-            ctx2.closePath();
-            ctx2.globalAlpha = 1;
+            ctx2.shadowOffsetX = 0
+            ctx2.shadowOffsetY = 0
+            ctx2.arc(jointPoint.x, jointPoint.y, HANDSIZE, 0, Math.PI * 2, true)
+            ctx2.fill()
+            ctx2.closePath()
+            ctx2.globalAlpha = 1
         }
 
         socket.on('bodyFrame', function (bodyFrame) {
-            ctx2.clearRect(0, 0, canvas.width, canvas.height);
-            
-            let index = 0
+            ctx2.clearRect(0, 0, w, h)
+
+            index = 0
             mouse = []
             bodyFrame.bodies.forEach(function (body) {
                 if (body.tracked) {
-					/*for (var jointType in body.joints) {
-						
-						ctx.fillStyle = colors[index];
-						ctx.fillRect(joint.depthX * canvas.width, joint.depthY * canvas.height, 10, 10);
-					}*/
+                    /*for (var jointType in body.joints) {
+                    	
+                        ctx.fillStyle = colors[index]
+                        ctx.fillRect(joint.depthX * canvas.width, joint.depthY * canvas.height, 10, 10)
+                    }*/
                     //draw hand states
-                    //updateHandState(body.leftHandState, body.joints[7]);
-                    //updateHandState(body.rightHandState, body.joints[11]);
+                    //updateHandState(body.leftHandState, body.joints[7])
+                    //updateHandState(body.rightHandState, body.joints[11])
                     /*cameraX: -0.35769253969192505
 cameraY: -0.07199238240718842
 cameraZ: 0.6234135627746582
@@ -315,175 +348,51 @@ orientationY: 0.5539015531539917
 orientationZ: 0.27129146456718445
 trackingState: 2*/
 
-                    let joint = body.joints[11];
-                    drawHand({x: joint.depthX * canvas.width, y: joint.depthY * canvas.height }, colors[index])
-                    mouse[index] = {x: joint.depthX * canvas.width, y: joint.depthY * canvas.height }
-                    index++;
+                    let joint = body.joints[11]
+                    const cords = { x: joint.depthX * w, y: joint.depthY * h }
+                    drawHand(cords, colors[index])
+                    strikes[index].push(new lite(cords.x, cords.y))
+                    index++
                 }
-            });
-        });
-
-
-
-
-
-
-        let text = canvas.getAttribute('text');
-        let fontSize = canvas.getAttribute('size');
-
-
-        let pixels = []
-        let animation = {
-            radius: 4,
-            move: 0.25,
-            pull: 0.15,
-            dampen: 0.95,
-            density: 5
-        }
-
-
-        // NOTE: this code is a bit upsidedown
-
-
-        let particles = []
-       
-
-        init()
-        step()
-
-        function init() {
-            draw.set({
-                font: `${fontSize}px monospace`,
-                textBaseline: 'middle',
-                textAlign: 'center',
-                fillStyle: '#FFF'
             })
 
-            draw.clear()
-            draw.fillText(canvas.width / 2, canvas.height / 2, text)
-            particles = scan(ctx, animation.density)
-            for (let particle of particles) {
-                particle.sx = particle.x
-                particle.sy = particle.y
-                particle.ax = Math.random() * 25 - 13
-                particle.ay = Math.random() * 25 - 13
-            }
+            window.requestAnimationFrame(draw)
+        })
+
+
+        function rnd(min, max) {
+            return Math.random() * (max - min) + min
         }
 
-        function step() {
-            draw.clear()
-            
-            let move = animation.move
-            let pull = animation.pull
-            let dampen = animation.dampen
-            if(!mouse.length) {
-                    mouse[0] = {x: 0, y: 0 }
-                }
-            for (let particle of particles) {
-                
-                mouse.forEach( mouseI => {
+        function draw() {
+            $.clearRect(0, 0, w, h)
+            $.globalCompositeOperation = 'source-over'
+            if (index > 0) {
+                for (let strikeIndex = 0; strikeIndex < index; strikeIndex++) {
+                    $.fillStyle = colors[index]
+                    $.lineWidth = rnd(1, 5)
+                    $.lineCap = 'round'
+                    $.strokeStyle = 'hsla(195, 95%, 95%, 1)'
+                    $.globalCompositeOperation = 'lighter'
+                    $.beginPath()
+                    $.moveTo(strikes[strikeIndex][0].x, strikes[strikeIndex][0].y)
+                    strikes[strikeIndex].forEach((itm, idx) => {
+                        itm.upd()
 
-                    let distance = Math.sqrt(Math.pow(particle.y - mouseI.y, 2) + Math.pow(particle.x - mouseI.x, 2))
-                    let push = 1 / distance * 6
-
-                    for (let ax of ['x', 'y']) {
-                        // Move
-                        particle[ax] += particle['a' + ax]
-                        // Move random
-                        particle['a' + ax] += (Math.random() - 0.5) * move
-                        // Pull to start
-                        particle['a' + ax] -= Math.sign(particle[ax] - particle['s' + ax]) * pull
-                        // Dampen
-                        particle['a' + ax] *= dampen
-                        // Push from mouse
-                        particle['a' + ax] -= Math.sign(mouseI[ax] - particle[ax]) * push
-                    }
-
-                    draw.fillCircle(particle.x, particle.y, 4)
-                })
-            }
-            window.requestAnimationFrame(step)
-        }
-
-        function scan(ctx, density) {
-            let imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height)
-            let pixels = []
-            let rows = ctx.canvas.height / density
-            let cols = ctx.canvas.width / density
-
-            for (let row = 0; row < rows; row++) {
-                for (let col = 0; col < cols; col++) {
-                    let pixelX = col * density + density / 2
-                    let pixelY = row * density + density / 2
-
-                    for (let rp = 0; rp < density; rp++) {
-                        for (let rc = 0; rc < density; rc++) {
-                            let pixelID = ((row * density + rp) * ctx.canvas.width + (col * density + rc)) * 4
-                            let [r, g, b, alpha] = [
-                                imageData.data[pixelID],
-                                imageData.data[pixelID + 1],
-                                imageData.data[pixelID + 2],
-                                imageData.data[pixelID + 3]
-                            ]
-
-                            if (alpha) {
-                                pixels.push({ x: pixelX, y: pixelY, info: { r: r, g: g, b: b, alpha: alpha } })
-                                rp = density
-                                rc = density
-                            }
+                        idx = idx + (Math.floor(Math.random()) * 6 - 3)
+                        if (0 <= idx && idx < strikes[strikeIndex].length) {
+                            let o = strikes[strikeIndex][idx]
+                            $.lineTo(o.x, o.y)
                         }
+                    })
+                    $.stroke()
+                    if (strikes[strikeIndex].length > 50) {
+                        strikes[strikeIndex].splice(0, 1)
                     }
                 }
             }
-            return pixels
+
         }
-        
-
-
-        function Draw(ctx) {
-            this.ctx = ctx
-            this.canvas = canvas
-
-            this.set = function (options) {
-                for (var option in options) {
-                    this.ctx[option] = options[option]
-                }
-            }
-            this.fillRect = function (x, y, width, height) {
-                this.ctx.fillRect(x, y, width, height)
-            }
-            this.strokeRect = function (x, y, width, height) {
-                this.ctx.strokeRect(x, y, width, height)
-            }
-            this.fillCircle = function (x, y, radius) {
-                this.ctx.beginPath()
-                this.ctx.fillStyle = '#e8b923';
-                this.ctx.arc(x, y, radius, 0, Math.PI * 2)
-                this.ctx.fill()
-            }
-            this.strokeCircle = function (x, y, radius) {
-                this.ctx.beginPath()
-                this.ctx.fillStyle = '#e8b923';
-                this.ctx.arc(x, y, radius, 0, Math.PI * 2)
-                this.ctx.stroke()
-            }
-            this.fillText = function (x, y, text) {
-                this.ctx.fillText(text, x, y)
-            }
-            this.strokeText = function (x, y, text) {
-                this.ctx.strokeText(text, x, y)
-            }
-            this.line = function (x1, y1, x2, y2) {
-                this.ctx.beginPath()
-                this.ctx.moveTo(x1, y1)
-                this.ctx.lineTo(x2, y2)
-                this.ctx.stroke()
-            }
-            this.clear = function () {
-                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
-            }
-        }
-
 
     </script>
 </body>
