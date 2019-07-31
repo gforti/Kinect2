@@ -383,11 +383,10 @@ trackingState: 2*/
                 
                 mouse.forEach( mouseI => {
 
-                
                     let distance = Math.sqrt(Math.pow(particle.y - mouseI.y, 2) + Math.pow(particle.x - mouseI.x, 2))
                     let push = 1 / distance * 6
 
-                    for (var ax of ['x', 'y']) {
+                    for (let ax of ['x', 'y']) {
                         // Move
                         particle[ax] += particle['a' + ax]
                         // Move random
@@ -407,20 +406,20 @@ trackingState: 2*/
         }
 
         function scan(ctx, density) {
-            var imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height)
-            var pixels = []
-            var rows = ctx.canvas.height / density
-            var cols = ctx.canvas.width / density
+            let imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height)
+            let pixels = []
+            let rows = ctx.canvas.height / density
+            let cols = ctx.canvas.width / density
 
-            for (var row = 0; row < rows; row++) {
-                for (var col = 0; col < cols; col++) {
-                    var pixelX = col * density + density / 2
-                    var pixelY = row * density + density / 2
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    let pixelX = col * density + density / 2
+                    let pixelY = row * density + density / 2
 
-                    for (var rp = 0; rp < density; rp++) {
-                        for (var rc = 0; rc < density; rc++) {
-                            var pixelID = ((row * density + rp) * ctx.canvas.width + (col * density + rc)) * 4
-                            var [r, g, b, alpha] = [
+                    for (let rp = 0; rp < density; rp++) {
+                        for (let rc = 0; rc < density; rc++) {
+                            let pixelID = ((row * density + rp) * ctx.canvas.width + (col * density + rc)) * 4
+                            let [r, g, b, alpha] = [
                                 imageData.data[pixelID],
                                 imageData.data[pixelID + 1],
                                 imageData.data[pixelID + 2],
