@@ -295,9 +295,10 @@
         })()
 
         let strikes = []
-        strikes[0] = [new lite(w / 2, h / 2)]
+        colors.forEach( (c, i) => {
+            strikes[i] = [new lite(w / 2, h / 2)]
+        })
         let index = 0
-
 
         // handstate circle size
         const HANDSIZE = 20
