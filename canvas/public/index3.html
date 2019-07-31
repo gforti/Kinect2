@@ -15,8 +15,11 @@
             overflow: hidden;
         }
 
-        #bodyCanvas {
-            background-color: black;
+        #bodyCanvas, #bodyCanvas2 {
+            position: absolute;
+            z-index: 1000;
+            left: 0;
+            top: 0;
         }
 
     
@@ -29,6 +32,7 @@
             top: 0px;
             left: 0px;
             z-index: 0;
+            list-style: none;
         }
         .cb-slideshow:after {
             content: '';
@@ -244,78 +248,46 @@
     </ul>
 
     <canvas id="bodyCanvas" text="victorioso" size="228"></canvas>
+    <canvas id="bodyCanvas2"></canvas>
+
     <script src="/socket.io/socket.io.js"></script>
     
     <script>
-        var socket = io.connect('/');
+        const socket = io.connect('/');
         const canvas = document.getElementById('bodyCanvas')
+        const canvas2 = document.getElementById('bodyCanvas2')
         canvas.width = window.innerWidth
         canvas.height = window.innerHeight
         const ctx = canvas.getContext("2d")
+        canvas2.width = window.innerWidth
+        canvas2.height = window.innerHeight
+        const ctx2 = canvas2.getContext("2d")
 
 
 
-        var colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#00ffff', '#ff00ff'];
-      
-       
-
-
+        const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#00ffff', '#ff00ff'];
         let mouse = []
         let draw = new Draw(ctx)
 
-
-       
-        
-
-
-
-
         // handstate circle size
-        var HANDSIZE = 20;
-
-        // closed hand state color
-        var HANDCLOSEDCOLOR = "red";
-
-        // open hand state color
-        var HANDOPENCOLOR = "green";
-
-        // lasso hand state color
-        var HANDLASSOCOLOR = "blue";
-
-        function updateHandState(handState, jointPoint) {
-            switch (handState) {
-                case 3:
-                    drawHand(jointPoint, HANDCLOSEDCOLOR);
-                    break;
-
-                case 2:
-                    drawHand(jointPoint, HANDOPENCOLOR);
-                    break;
-
-                case 4:
-                    drawHand(jointPoint, HANDLASSOCOLOR);
-                    break;
-            }
-        }
+        const HANDSIZE = 20;
 
         function drawHand(jointPoint, handColor) {
             // draw semi transparent hand cicles
-            ctx.save()
-            ctx.beginPath();
-            ctx.fillStyle = '#ffffff';
-            ctx.shadowColor = handColor;
-            ctx.shadowBlur = 20;
-            ctx.shadowOffsetX = 0;
-            ctx.shadowOffsetY = 0;
-            ctx.arc(jointPoint.x, jointPoint.y, HANDSIZE, 0, Math.PI * 2, true);
-            ctx.fill();
-            ctx.closePath();
-            ctx.globalAlpha = 1;
-            ctx.restore()
+            ctx2.beginPath();
+            ctx2.fillStyle = '#ffffff';
+            ctx2.shadowColor = handColor;
+            ctx2.shadowBlur = HANDSIZE
+            ctx2.shadowOffsetX = 0;
+            ctx2.shadowOffsetY = 0;
+            ctx2.arc(jointPoint.x, jointPoint.y, HANDSIZE, 0, Math.PI * 2, true);
+            ctx2.fill();
+            ctx2.closePath();
+            ctx2.globalAlpha = 1;
         }
 
         socket.on('bodyFrame', function (bodyFrame) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx2.clearRect(0, 0, canvas.width, canvas.height);
             
             let index = 0
             mouse = []
@@ -345,9 +317,7 @@ trackingState: 2*/
 
                     let joint = body.joints[11];
                     drawHand({x: joint.depthX * canvas.width, y: joint.depthY * canvas.height }, colors[index])
-                   
                     mouse[index] = {x: joint.depthX * canvas.width, y: joint.depthY * canvas.height }
-                                      
                     index++;
                 }
             });
@@ -392,7 +362,7 @@ trackingState: 2*/
             draw.clear()
             draw.fillText(canvas.width / 2, canvas.height / 2, text)
             particles = scan(ctx, animation.density)
-            for (var particle of particles) {
+            for (let particle of particles) {
                 particle.sx = particle.x
                 particle.sy = particle.y
                 particle.ax = Math.random() * 25 - 13
@@ -403,11 +373,14 @@ trackingState: 2*/
         function step() {
             draw.clear()
             
-            var move = animation.move
-            var pull = animation.pull
-            var dampen = animation.dampen
-
+            let move = animation.move
+            let pull = animation.pull
+            let dampen = animation.dampen
+            if(!mouse.length) {
+                    mouse[0] = {x: 0, y: 0 }
+                }
             for (let particle of particles) {
+                
                 mouse.forEach( mouseI => {
 
                 
@@ -463,48 +436,9 @@ trackingState: 2*/
                     }
                 }
             }
-            //console.log('pixels', pixels)
-            /*
-            for(var i = 0; i < imageData.data.length; i+=4) {
-                var x = (i/4) % imageData.width
-                var y = Math.floor((i/4)/imageData.width) % imageData.height
-                var [r,g,b,alpha] = [imageData.data[i],imageData.data[i+1],imageData.data[i+2], imageData.data[i+3]]
-                // Loop all pixels and take the max
-                // the block at pixel 0 and density 2 would be [0, 1, 4, 5]
-                // Note: if the dpi doesn't line up with the col/row count. 💀
-                // Center the pixel between
-                //
-                //  -------------------
-                //  |  0   1   2   3  |
-                //  |  4   5   6   7  |
-                //  |  8   9  10  11  |
-                //  -------------------
-                var block = []
-                for(var b = 1; b < density; b++) {
-                    r = Math.max(r, imageData.data[i+b])
-                    g = Math.max(g, imageData.data[i+b+1])
-                    b = Math.max(b, imageData.data[i+b+2])
-                    alpha = Math.max(b, imageData.data[i+b+3])
-                }
-                if(alpha) {
-                    pixels.push({ x:x, y:y, r:r, g:g, b:b, a:alpha, i:i })
-                }
-            }
-            */
             return pixels
         }
-        // function scan() {
-        // 	var points = []
-        // 	var x = canvas.width; while(x--) {
-        // 		var y = canvas.height; while(y--) {
-        // 			var [r,g,b,alpha] = ctx.getImageData(x, y, 1, 1).data
-        // 			if(alpha){
-        // 				points.push({ x:x, y:y, r:r, g:g, b:b, a:alpha })
-        // 			}
-        // 		}
-        // 	}
-        // 	return points
-        // }
+        
 
 
         function Draw(ctx) {
@@ -547,18 +481,9 @@ trackingState: 2*/
                 this.ctx.stroke()
             }
             this.clear = function () {
-                //this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
             }
         }
-
-        function Mouse() {
-            this.x = []
-            this.y = []
-        }
-
-
-
-
 
 
     </script>
