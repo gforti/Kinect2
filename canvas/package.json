@@ -11,9 +11,9 @@
 	"author": "Wouter Verweirder <wouter.verweirder@gmail.com>",
 	"license": "MIT",
 	"dependencies": {
-		"express": "~4.9.5",
+		"express": "~4.18.2",
 		"kinect2": "^0.1.7",
-		"socket.io": "~1.1.0"
+		"socket.io": "~4.5.4"
 	},
 	"devDependencies": {
 		"nodemon": "^1.17.3"
